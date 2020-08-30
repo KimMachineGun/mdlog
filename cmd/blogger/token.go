@@ -28,24 +28,28 @@ func getTokenSourceWithCredentialFile(ctx context.Context, credentialFile string
 	token, err := getTokenFromCache(cacheFile)
 	if err != nil {
 		return nil, err
-	} else if token == nil {
-		authURL := config.AuthCodeURL("blogger-state", oauth2.AccessTypeOffline)
-		fmt.Printf("URL: %s\nCode:", authURL)
+	} else if token != nil {
+		log.Println("get token from cache")
 
-		var code string
-		fmt.Scanln(&code)
+		return config.TokenSource(ctx, token), nil
+	}
 
-		token, err = config.Exchange(ctx, code)
-		if err != nil {
-			return nil, err
-		}
+	authURL := config.AuthCodeURL("blogger-state", oauth2.AccessTypeOffline)
+	fmt.Printf("URL: %s\nCode: ", authURL)
 
-		log.Println("get token from web")
+	var code string
+	fmt.Scanln(&code)
 
-		err = writeTokenToCache(cacheFile, token)
-		if err != nil {
-			return nil, err
-		}
+	token, err = config.Exchange(ctx, code)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Println("get token from web")
+
+	err = writeTokenToCache(cacheFile, token)
+	if err != nil {
+		return nil, err
 	}
 
 	return config.TokenSource(ctx, token), nil
@@ -65,8 +69,6 @@ func getTokenFromCache(cacheFile string) (*oauth2.Token, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	log.Println("get token from cache")
 
 	return &token, nil
 }
