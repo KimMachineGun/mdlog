@@ -20,7 +20,7 @@ func (p Plan) Print() {
 			log.Printf("Title: %s -> %s\n", remotePost.Title, localPost.Title)
 		}
 		if remotePost.Content != localPost.Content {
-			log.Println("Content: (diff not supported yet)")
+			log.Println("Content: (diff is not supported yet)")
 		}
 		if len(remotePost.Tags) != len(localPost.Tags) {
 			log.Printf("Tags: %s -> %s\n", remotePost.Tags, localPost.Tags)
