@@ -7,8 +7,6 @@ import (
 	"github.com/KimMachineGun/mdlog/internal/md2html"
 )
 
-type PostStatus int
-
 const (
 	PostStatusDraft PostStatus = iota
 	PostStatusPublished
@@ -20,6 +18,12 @@ var (
 		PostStatusPublished: "PUBLISHED",
 	}
 )
+
+type PostStatus int
+
+func PostStatusText(status PostStatus) string {
+	return postStatusText[status]
+}
 
 type Post struct {
 	ID      string

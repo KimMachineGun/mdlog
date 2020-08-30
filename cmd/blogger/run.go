@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -27,6 +26,8 @@ func run(args []string) error {
 		return commandInit(args[2:])
 	case "create":
 		return commandCreate(args[2:])
+	case "plan":
+		return commandPlan(args[2:])
 	case "sync":
 		return commandSync(args[2:])
 	}
@@ -140,6 +141,72 @@ func commandCreate(args []string) error {
 	return nil
 }
 
+func commandPlan(args []string) error {
+	command := flag.NewFlagSet("plan", flag.ExitOnError)
+
+	err := command.Parse(args)
+
+	if err != nil {
+		return err
+	}
+
+	c, err := getConfig()
+	if err != nil {
+		return fmt.Errorf("cannot get config: %v", err)
+
+	}
+
+	ctx := context.Background()
+	ts, err := getTokenSourceWithCredentialFile(ctx, c.CredentialPath, c.CachePath)
+	if err != nil {
+		return fmt.Errorf("cannot get token: %v", err)
+	}
+
+	b, err := blogger.New(ctx, c.BloggerURL, ts)
+	if err != nil {
+		return err
+	}
+
+	s := mdlog.NewService(b)
+
+	var localPosts []*mdlog.Post
+	err = filepath.Walk(c.PostsPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() || filepath.Ext(info.Name()) != ".md" {
+			return nil
+		}
+
+		b, err := ioutil.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		p, err := mdlog.ParsePost(b)
+		if err != nil {
+			return err
+		}
+
+		localPosts = append(localPosts, p)
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("cannot gather local posts: %v", err)
+	}
+
+	plan, err := s.Plan(localPosts)
+	if err != nil {
+		return err
+	}
+
+	plan.Print()
+
+	return nil
+}
+
 func commandSync(args []string) error {
 	command := flag.NewFlagSet("sync", flag.ExitOnError)
 
@@ -201,9 +268,7 @@ func commandSync(args []string) error {
 		return err
 	}
 
-	for _, localPost := range plan {
-		log.Printf("updated: %s [%s]", localPost.Title, localPost.ID)
-	}
+	plan.Print()
 
 	return nil
 }

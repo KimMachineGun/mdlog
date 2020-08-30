@@ -21,7 +21,7 @@ func NewService(blog Blog) *Service {
 	}
 }
 
-func (s *Service) Plan(localPosts []*Post) (map[*Post]*Post, error) {
+func (s *Service) Plan(localPosts []*Post) (Plan, error) {
 	remotePosts, err := s.blog.GetPosts()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get remote posts: %v", err)
@@ -47,7 +47,7 @@ func (s *Service) Plan(localPosts []*Post) (map[*Post]*Post, error) {
 	return plan, nil
 }
 
-func (s *Service) Sync(localPosts []*Post) (map[*Post]*Post, error) {
+func (s *Service) Sync(localPosts []*Post) (Plan, error) {
 	plan, err := s.Plan(localPosts)
 	if err != nil {
 		return nil, fmt.Errorf("cannot make sync plan: %v", err)
